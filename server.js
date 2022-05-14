@@ -4,6 +4,7 @@ const cors = require('@koa/cors');
 const koaBody = require('koa-body');
 const Router = require('koa-router');
 const WS = require('ws');
+const { v4 } = require('uuid');
 
 const router = new Router();
 const app = new Koa();
@@ -11,8 +12,8 @@ const port = process.env.PORT || 1733;
 const server = http.createServer(app.callback());
 const wsServer = new WS.Server({ server });
 
-let messages = [];
-const clients = new Set();
+const messages = [];
+let clients = [];
 
 app.use(cors());
 app.use(koaBody());
@@ -24,9 +25,14 @@ router.get('/messages', async (ctx, next) => {
   await next();
 });
 
+router.get('/connections', async (ctx, next) => {
+  ctx.response.body = clients;
+  await next();
+});
+
 wsServer.on('connection', (ws) => {
-  // const clients = Array.from(wsServer.clients).filter((o) => o.readyState === WS.OPEN);
-  clients.add(ws);
+  clients = [...wsServer.clients].filter((o) => o.readyState === WS.OPEN);
+  ws.id = v4();
 
   ws.on('message', (msg) => {
     messages.push(JSON.parse(msg));
@@ -34,7 +40,7 @@ wsServer.on('connection', (ws) => {
   });
 
   ws.on('close', () => {
-    clients.delete(ws);
+    clients = [...wsServer.clients].filter((o) => o.readyState === WS.OPEN);
   });
 });
 
