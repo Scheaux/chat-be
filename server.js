@@ -12,6 +12,7 @@ const server = http.createServer(app.callback());
 const wsServer = new WS.Server({ server });
 
 let messages = [];
+const clients = new Set();
 
 app.use(cors());
 app.use(koaBody());
@@ -24,11 +25,16 @@ router.get('/messages', async (ctx, next) => {
 });
 
 wsServer.on('connection', (ws) => {
-  const clients = Array.from(wsServer.clients).filter((o) => o.readyState === WS.OPEN);
+  // const clients = Array.from(wsServer.clients).filter((o) => o.readyState === WS.OPEN);
+  clients.add(ws);
 
   ws.on('message', (msg) => {
     messages.push(JSON.parse(msg));
-    clients.forEach((x) => x.send(msg.toString()));
+    clients.forEach((x) => x.send(JSON.parse(msg)));
+  });
+
+  ws.on('close', () => {
+    clients.delete(ws);
   });
 });
 
