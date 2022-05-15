@@ -37,7 +37,7 @@ wsServer.on('connection', (ws, req) => {
 
   ws.on('message', (msg) => {
     messages.push(JSON.parse(msg));
-    clients.forEach((x) => x.send(JSON.parse(msg)));
+    clients.forEach((x) => x.send(msg.toString()));
   });
 
   ws.on('close', () => {
