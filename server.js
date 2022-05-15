@@ -12,18 +12,12 @@ const port = process.env.PORT || 1733;
 const server = http.createServer(app.callback());
 const wsServer = new WS.Server({ server });
 
-const messages = [];
 let clients = [];
 
 app.use(cors());
 app.use(koaBody());
 app.use(router.routes());
 app.use(router.allowedMethods());
-
-router.get('/messages', async (ctx, next) => {
-  ctx.response.body = messages;
-  await next();
-});
 
 router.get('/connections', async (ctx, next) => {
   ctx.response.body = clients;
@@ -36,7 +30,6 @@ wsServer.on('connection', (ws, req) => {
   ws.username = req.headers['sec-websocket-protocol'];
 
   ws.on('message', (msg) => {
-    messages.push(JSON.parse(msg));
     clients.forEach((x) => x.send(msg.toString()));
   });
 
