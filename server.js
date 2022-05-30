@@ -27,9 +27,10 @@ router.get('/connections', async (ctx, next) => {
 wsServer.on('connection', (ws, req) => {
   clients = [...wsServer.clients].filter((o) => o.readyState === WS.OPEN);
   ws.id = v4();
-  ws.username = req.headers['sec-websocket-protocol'];
+  // ws.username = req.headers['sec-websocket-protocol'];
 
   ws.on('message', (msg) => {
+    ws.username = JSON.parse(msg).username;
     clients.forEach((x) => x.send(msg.toString()));
   });
 
