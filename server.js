@@ -13,6 +13,7 @@ const server = http.createServer(app.callback());
 const wsServer = new WS.Server({ server });
 
 let clients = [];
+let messages = [];
 
 app.use(cors());
 app.use(koaBody());
@@ -24,13 +25,20 @@ router.get('/connections', async (ctx, next) => {
   await next();
 });
 
+router.get('/messages', async (ctx, next) => {
+  const parsed = messages.map(x => x.toString());
+  ctx.response.body = parsed;
+  await next();
+});
+
 wsServer.on('connection', (ws, req) => {
   clients = [...wsServer.clients].filter((o) => o.readyState === WS.OPEN);
   ws.id = v4();
   // ws.username = req.headers['sec-websocket-protocol'];
 
   ws.on('message', (msg) => {
-    ws.username = JSON.parse(msg).username;
+    messages.push(msg);
+    if (!ws.username) ws.username = JSON.parse(msg).username;
     clients.forEach((x) => x.send(msg.toString()));
   });
 
@@ -40,5 +48,3 @@ wsServer.on('connection', (ws, req) => {
 });
 
 server.listen(port);
-// app.listen(port);
-// console.log(`listening on port: ${port}`);
