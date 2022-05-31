@@ -13,7 +13,52 @@ const server = http.createServer(app.callback());
 const wsServer = new WS.Server({ server });
 
 let clients = [];
-let messages = [];
+let messages = [
+  '{"message":"first message","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"test","username":"user1","date":"12:00 12.12.2022"}',
+  '{"message":"last message","username":"user1","date":"12:00 12.12.2022"}'
+];
 
 app.use(cors());
 app.use(koaBody());
@@ -25,9 +70,23 @@ router.get('/connections', async (ctx, next) => {
   await next();
 });
 
+router.get('/lazy/:count', async (ctx, next) => {
+  const array = [];
+  let counter = 0;
+  const limit = +ctx.params.count;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (counter === limit) break;
+    array.push(messages[i]);
+    counter++;
+  }
+  array.reverse();
+  ctx.response.body = array;
+  await next();
+});
+
 router.get('/messages', async (ctx, next) => {
-  const parsed = messages.map(x => x.toString());
-  ctx.response.body = parsed;
+  ctx.response.body = messages;
+  console.log(messages);
   await next();
 });
 
@@ -37,8 +96,11 @@ wsServer.on('connection', (ws, req) => {
   // ws.username = req.headers['sec-websocket-protocol'];
 
   ws.on('message', (msg) => {
-    messages.push(msg);
-    if (!ws.username) ws.username = JSON.parse(msg).username;
+    if (!ws.username) {
+      ws.username = JSON.parse(msg).username;
+      return;
+    }
+    messages.push(msg.toString());
     clients.forEach((x) => x.send(msg.toString()));
   });
 
