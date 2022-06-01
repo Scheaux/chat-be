@@ -5,6 +5,8 @@ const koaBody = require('koa-body');
 const Router = require('koa-router');
 const WS = require('ws');
 const { v4 } = require('uuid');
+const jokes = require('./jokes.json');
+const moment = require('moment-timezone');
 
 const router = new Router();
 const app = new Koa();
@@ -13,50 +15,7 @@ const server = http.createServer(app.callback());
 const wsServer = new WS.Server({ server });
 
 let clients = [];
-let messages = [
-  '{"type":"text","message":"FIRST MESSAGE","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"test","username":"user1","date":"12:00 12.12.2022"}',
-  '{"type":"text","message":"LAST MESSAGE","username":"user1","date":"12:00 12.12.2022"}',
-];
+let messages = [];
 
 app.use(cors());
 app.use(koaBody());
@@ -100,11 +59,28 @@ wsServer.on('connection', (ws, req) => {
     }
     messages.push(msg.toString());
     clients.forEach((x) => x.send(msg.toString()));
+    checkCommand(clients, JSON.parse(msg).message);
   });
 
   ws.on('close', () => {
     clients = [...wsServer.clients].filter((o) => o.readyState === WS.OPEN);
   });
 });
+
+function generateJoke() {
+  return jokes[Math.floor(Math.random() * jokes.length)];
+}
+
+function checkCommand(clients, msg) {
+  if (msg.trim() === '!joke') {
+    const obj = {
+      type: 'text',
+      username: 'ChaosBot',
+      message: generateJoke(),
+      date: moment.tz('Europe/Moscow').format('kk:mm DD.MM.YYYY'),
+    };
+    clients.forEach((x) => x.send(JSON.stringify(obj)));
+  }
+}
 
 server.listen(port);
