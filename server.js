@@ -79,7 +79,9 @@ function checkCommand(clients, msg) {
       message: generateJoke(),
       date: moment.tz('Europe/Moscow').format('kk:mm DD.MM.YYYY'),
     };
-    clients.forEach((x) => x.send(JSON.stringify(obj)));
+    const message = JSON.stringify(obj);
+    messages.push(message);
+    clients.forEach((x) => x.send(message));
   }
 }
 
